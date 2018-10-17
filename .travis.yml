@@ -2,15 +2,12 @@
 language: java
 jdk:
   - oraclejdk11
-  - oraclejdk10
+  #- oraclejdk10
   - oraclejdk9
   - oraclejdk8
 branches:
   only:
     - master
-cache:
-  directories:
-    - $HOME/.m2
 git:
   depth: 1000
 # End .travis.yml
