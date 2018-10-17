@@ -1,6 +1,7 @@
 package ru.nuyanzin.quizshell;
 
 import java.text.MessageFormat;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -13,7 +14,7 @@ public final class Loc {
    * Resource to use.
    */
   private static final ResourceBundle RESOURCE_BUNDLE =
-      ResourceBundle.getBundle("QuizShell");
+      ResourceBundle.getBundle("QuizShell", Locale.ROOT);
 
   /**
    * No need to have constructor public.
@@ -29,6 +30,7 @@ public final class Loc {
    * @return the message with substituted params
    */
   public static String getLocMessage(final String key, final Object... params) {
-    return MessageFormat.format(RESOURCE_BUNDLE.getString(key), params);
+    return new MessageFormat(RESOURCE_BUNDLE.getString(key), Locale.ROOT)
+        .format(params);
   }
 }

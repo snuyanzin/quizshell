@@ -8,14 +8,26 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
+/**
+ * Quiz shell session options.
+ */
 public class QuizShellOpts {
   public static final String PROPERTY_PREFIX = "quizshell.";
   private final QuizShell quizShell;
   private int numberOfTasks = 5;
+  private int maxNumber = 10;
   private Set<String> propertyNames;
 
   public QuizShellOpts(QuizShell quizShell) {
     this.quizShell = quizShell;
+  }
+
+  public int getMaxNumber() {
+    return maxNumber;
+  }
+
+  public void setMaxNumber(int maxNumber) {
+    this.maxNumber = maxNumber;
   }
 
   public void setNumberOfTasks(int numberOfTasks) {
@@ -36,13 +48,13 @@ public class QuizShellOpts {
       quizShell.getReflector().invoke(this, "set" + key, value);
       return true;
     } catch (Exception e) {
-          System.err.println(
-              Loc.getLocMessage(
-                  "error-setting",
-                  key,
-                  e.getCause() == null ? e : e.getCause()));
-        }
-      return false;
+      System.err.println(
+          Loc.getLocMessage(
+              "error-setting",
+              key,
+              e.getCause() == null ? e : e.getCause()));
+    }
+    return false;
   }
 
   Set<String> propertyNamesMixed() {
@@ -85,9 +97,11 @@ public class QuizShellOpts {
     return propertyNames;
   }
 
-  public Properties toProperties() throws IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+  public Properties toProperties()
+      throws IllegalAccessException,
+      InvocationTargetException,
+      ClassNotFoundException {
     Properties props = new Properties();
-
     for (String name : propertyNames()) {
       props.setProperty(PROPERTY_PREFIX + name, get(name));
     }
@@ -95,7 +109,10 @@ public class QuizShellOpts {
     return props;
   }
 
-  public String get(String key) throws IllegalAccessException, ClassNotFoundException, InvocationTargetException {
+  public String get(String key)
+      throws IllegalAccessException,
+      ClassNotFoundException,
+      InvocationTargetException {
     return String.valueOf(
         quizShell.getReflector().invoke(this, "get" + key));
   }

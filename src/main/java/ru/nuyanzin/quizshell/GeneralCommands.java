@@ -3,7 +3,6 @@ package ru.nuyanzin.quizshell;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -11,6 +10,8 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 /**
  * Class for general commands.
@@ -24,7 +25,7 @@ public final class GeneralCommands implements Commands {
   private static final NumberFormat INTEGER_INSTANCE;
 
   static {
-    INTEGER_INSTANCE = NumberFormat.getIntegerInstance();
+    INTEGER_INSTANCE = NumberFormat.getIntegerInstance(Locale.ROOT);
     INTEGER_INSTANCE.setParseIntegerOnly(false);
   }
 
@@ -54,26 +55,69 @@ public final class GeneralCommands implements Commands {
    */
   public void plus(final String line) {
     String[] parts = line.trim().split(COMMAND_OPTIONS_REGEX);
-    final int numOfTasks = getNumOfTasks(parts);
+    int[] args = parseIntegersOrThrow(
+        Loc.getLocMessage("number-of-tasks-should-be-number"), parts);
+    final int numOfTasks = getNumOfTasks(args);
+    final int maxNumber = getMaxNumber(args);
+    final BiFunction<Integer, Integer, Integer> biFunction =
+        (integer, integer2) -> integer + integer2;
+    final BiFunction<Integer, Integer, String> biFunctionOutput =
+        (integer, integer2) -> integer + " + " + integer2 + " = ";
+    Supplier<Integer> numberGenerator =
+        () -> Math.abs(random.nextInt() % maxNumber);
+    doTask(numOfTasks, biFunction, biFunctionOutput, numberGenerator);
+  }
+
+  private void doTask(int numOfTasks,
+                      BiFunction<Integer, Integer, Integer> biFunction,
+                      BiFunction<Integer, Integer, String> biFunctionOutput,
+                      Supplier<Integer> numberGenerator) {
     Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8.name());
     for (int i = 0; i < numOfTasks; i++) {
-      int first = Math.abs(random.nextInt() % 10);
-      int second = Math.abs(random.nextInt() % 10);
+      int first = numberGenerator.get();
+      int second = numberGenerator.get();
       int userAnswer = Integer.MIN_VALUE;
-      shell.output( first + " + " + second + " = ", false);
+      shell.output(biFunctionOutput.apply(first, second), false);
+      final int result = biFunction.apply(first, second);
       do {
         String answer = scanner.nextLine();
-        int[] intAnswer = parseIntegersOrThrow(
-            Loc.getLocMessage("answer-should-be-number"), answer);
-        if (intAnswer != null) {
-          userAnswer = intAnswer[0];
-        }
+        userAnswer = getUserAnswer(userAnswer, answer);
         shell.output(Loc.getLocMessage("answer", answer)
-            + (userAnswer == first + second
-               ? Loc.getLocMessage("correct-answer")
-               : Loc.getLocMessage("not-correct-answer")));
-      } while (userAnswer != first + second);
+            + (userAnswer == result
+            ? Loc.getLocMessage("correct-answer")
+            : Loc.getLocMessage("not-correct-answer")));
+      } while (userAnswer != result);
     }
+  }
+
+  /**
+   * Command minus to generate and check '-' tasks.
+   *
+   * @param line        full command line
+   */
+  public void minus(final String line) {
+    String[] parts = line.trim().split(COMMAND_OPTIONS_REGEX);
+    int[] args = parseIntegersOrThrow(
+        Loc.getLocMessage("number-of-tasks-should-be-number"), parts);
+    final int numOfTasks = getNumOfTasks(args);
+    final int maxNumber = getMaxNumber(args);
+    final BiFunction<Integer, Integer, Integer> biFunction =
+        (integer, integer2) -> Math.abs(integer - integer2);
+    final BiFunction<Integer, Integer, String> biFunctionOutput =
+        (integer, integer2) -> Math.max(integer, integer2)
+            + " - " + Math.min(integer, integer2) + " = ";
+    Supplier<Integer> numberGenerator =
+        () -> Math.abs(random.nextInt() % maxNumber);
+    doTask(numOfTasks, biFunction, biFunctionOutput, numberGenerator);
+  }
+
+  private int getUserAnswer(int userAnswer, String answer) {
+    int[] intAnswer = parseIntegersOrThrow(
+        Loc.getLocMessage("answer-should-be-number"), answer);
+    if (intAnswer != null) {
+      userAnswer = intAnswer[0];
+    }
+    return userAnswer;
   }
 
   /**
@@ -132,7 +176,7 @@ public final class GeneralCommands implements Commands {
   public void config(String line) {
     try {
       Properties props = shell.getOpts().toProperties();
-      Set<String> keys = new TreeSet<String>(((Map)(props)).keySet());
+      Set<String> keys = new TreeSet<String>(((Map) props).keySet());
       for (String key : keys) {
         shell.outputProperty(
             key.substring(QuizShellOpts.PROPERTY_PREFIX.length()),
@@ -144,21 +188,16 @@ public final class GeneralCommands implements Commands {
     }
   }
 
-  private int getNumOfTasks(String[] parts) {
-    final int numOfTasks;
-    if (parts.length == 0 || parts[0].trim().isEmpty()) {
-       numOfTasks = shell.getOpts().getNumberOfTasks();
-    } else {
-      int[] args = parseIntegersOrThrow(
-          Loc.getLocMessage("number-of-tasks-should-be-number"), parts[0]);
-      if (args == null) {
-        // just return as exception message printed from parseIntegersOrThrow
-        numOfTasks = shell.getOpts().getNumberOfTasks();
-      } else {
-        numOfTasks = args[0];
-      }
-    }
-    return numOfTasks;
+  private int getNumOfTasks(int[] args) {
+    return args == null || args.length < 1
+        ? shell.getOpts().getNumberOfTasks()
+        : args[0];
+  }
+
+  private int getMaxNumber(int[] args) {
+    return args == null || args.length < 2
+        ? shell.getOpts().getMaxNumber()
+        : args[1];
   }
 
   /**
