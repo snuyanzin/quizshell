@@ -59,14 +59,6 @@ public class QuizShellOpts {
       }
 
       String propName = deCamel(method.getName().substring(3));
-      if (propName.equals("run")) {
-        // Not a real property
-        continue;
-      }
-      if (propName.equals("autosave")) {
-        // Deprecated; property is now "autoSave"
-        continue;
-      }
       names.add(propName);
     }
 
