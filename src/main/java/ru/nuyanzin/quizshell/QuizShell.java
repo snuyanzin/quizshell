@@ -1,7 +1,5 @@
 package ru.nuyanzin.quizshell;
 
-import org.jline.reader.LineReader;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,8 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -37,7 +38,9 @@ public class QuizShell {
      */
     private final PrintStream outputStream;
 
-    private LineReader lineReader;
+    private final Reflector reflector;
+    private final QuizShellOpts quizShellOpts;
+
     /**
      * Defined map of existing commands.
      */
@@ -50,6 +53,9 @@ public class QuizShell {
      *                                      for print stream does not exist
      */
     private QuizShell() throws UnsupportedEncodingException {
+      reflector = new Reflector(this);
+      quizShellOpts = new QuizShellOpts(this);
+
       outputStream = new PrintStream(
           System.out, true, StandardCharsets.UTF_8.name());
 
@@ -59,13 +65,15 @@ public class QuizShell {
           Collections.unmodifiableMap(new HashMap<String, CommandHandler>() {{
             put("PLUS", new ReflectiveCommandHandler<>(
                 QuizShell.this, commands, "PLUS"));
+            put("+", new ReflectiveCommandHandler<>(
+                QuizShell.this, commands, "PLUS"));
             put("H", new ReflectiveCommandHandler<>(
                 QuizShell.this, commands, "H"));
+            put("SET", new ReflectiveCommandHandler<>(
+                QuizShell.this, commands, "SET"));
             put("Q", new ReflectiveCommandHandler<>(
                 QuizShell.this, commands, "Q"));
           }});
-
-
     }
 
     /**
@@ -74,6 +82,7 @@ public class QuizShell {
     public static void main(final String[] args)
         throws UnsupportedEncodingException {
       QuizShell shell = new QuizShell();
+
       if (args == null || args.length == 0) {
         shell.start(System.in);
       } else if (args.length == 1) {
@@ -152,7 +161,7 @@ public class QuizShell {
     private void executeCommand(final String fullCommandLine,
                                 final String trimmedLine,
                                 final String commandName) {
-      CommandHandler commandHandler = commandHandlerMap.get(commandName);
+      CommandHandler commandHandler = commandHandlerMap.get(commandName.toUpperCase(Locale.ROOT));
       if (commandHandler != null) {
         if (Objects.equals(commandName, trimmedLine)) {
           commandHandler.execute("");
@@ -229,6 +238,14 @@ public class QuizShell {
       }
     }
 
+    public Reflector getReflector() {
+    return reflector;
+  }
+
+    public QuizShellOpts getOpts() {
+      return quizShellOpts;
+    }
+
     /**
      * Get print stream output.
      *
@@ -249,4 +266,131 @@ public class QuizShell {
       }
       e.printStackTrace(outputStream);
     }
+
+  String[] split(String line, String delim) {
+    return split(line, delim, 0);
+  }
+
+  public String[] split(String line, String delim, int limit) {
+    if (delim.indexOf('\'') != -1 || delim.indexOf('"') != -1) {
+      // quotes in delim are not supported yet
+      throw new UnsupportedOperationException();
+    }
+    boolean inQuotes = false;
+    int tokenStart = 0;
+    int lastProcessedIndex = 0;
+
+    List<String> tokens = new ArrayList<>();
+    for (int i = 0; i < line.length(); i++) {
+      if (limit > 0 && tokens.size() == limit) {
+        break;
+      }
+      if (line.charAt(i) == '\'' || line.charAt(i) == '"') {
+        if (inQuotes) {
+          if (line.charAt(tokenStart) == line.charAt(i)) {
+            inQuotes = false;
+            tokens.add(line.substring(tokenStart, i + 1));
+            lastProcessedIndex = i;
+          }
+        } else {
+          tokenStart = i;
+          inQuotes = true;
+        }
+      } else if (line.regionMatches(i, delim, 0, delim.length())) {
+        if (inQuotes) {
+          i += delim.length() - 1;
+          continue;
+        } else if (i > 0 && (
+            !line.regionMatches(i - delim.length(), delim, 0, delim.length())
+                && line.charAt(i - 1) != '\''
+                && line.charAt(i - 1) != '"')) {
+          tokens.add(line.substring(tokenStart, i));
+          lastProcessedIndex = i;
+          i += delim.length() - 1;
+
+        }
+      } else if (i > 0
+          && line.regionMatches(i - delim.length(), delim, 0, delim.length())) {
+        if (inQuotes) {
+          continue;
+        }
+        tokenStart = i;
+      }
+    }
+    if ((lastProcessedIndex != line.length() - 1
+        && (limit == 0 || limit > tokens.size()))
+        || (lastProcessedIndex == 0 && line.length() == 1)) {
+      tokens.add(line.substring(tokenStart, line.length()));
+    }
+    String[] ret = new String[tokens.size()];
+    for (int i = 0; i < tokens.size(); i++) {
+      ret[i] = dequote(tokens.get(i));
+    }
+
+    return ret;
+  }
+
+  String dequote(String str) {
+    if (str == null) {
+      return null;
+    }
+
+    if ((str.length() == 1 && (str.charAt(0) == '\'' || str.charAt(0) == '\"'))
+        || ((str.charAt(0) == '"' || str.charAt(0) == '\''
+        || str.charAt(str.length() - 1) == '"'
+        || str.charAt(str.length() - 1) == '\'')
+        && str.charAt(0) != str.charAt(str.length() - 1))) {
+      throw new IllegalArgumentException(
+          "A quote should be closed for <" + str + ">");
+    }
+    char prevQuote = 0;
+    int index = 0;
+    while ((str.charAt(index) == str.charAt(str.length() - index - 1))
+        && (str.charAt(index) == '"' || str.charAt(index) == '\'')) {
+      // if start and end point to the same element
+      if (index == str.length() - index - 1) {
+        if (prevQuote == str.charAt(index)) {
+          throw new IllegalArgumentException(
+              "A non-paired quote may not occur between the same quotes");
+        } else {
+          break;
+        }
+        // else if start and end point to neighbour elements
+      } else if (index == str.length() - index - 2) {
+        index++;
+        break;
+      }
+      prevQuote = str.charAt(index);
+      index++;
+    }
+
+    return index == 0 ? str : str.substring(index, str.length() - index);
+  }
+
+  /**
+   * Splits the line into an array, tokenizing on space characters.
+   *
+   * @param line the line to break up
+   * @return an array of individual words
+   */
+  String[] split(String line) {
+    return split(line, 0);
+  }
+
+  /**
+   * Splits the line into an array, tokenizing on space characters,
+   * limiting the number of words to read.
+   *
+   * @param line the line to break up
+   * @param limit the limit for number of tokens
+   *        to be processed (0 means no limit)
+   * @return an array of individual words
+   */
+  String[] split(String line, int limit) {
+    return split(line, " ", limit);
+  }
+
+  void outputProperty(String key, String value) {
+    output(key + " " + value);
+  }
 }
