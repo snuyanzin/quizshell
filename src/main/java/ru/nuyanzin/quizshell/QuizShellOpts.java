@@ -36,12 +36,6 @@ public class QuizShellOpts {
       quizShell.getReflector().invoke(this, "set" + key, value);
       return true;
     } catch (Exception e) {
-
-          // need to use System.err here because when bad command args
-          // are passed this is called before init is done, meaning
-          // that sqlline's error() output chokes because it depends
-          // on properties like text coloring that can get set in
-          // arbitrary order.
           System.err.println(
               Loc.getLocMessage(
                   "error-setting",
