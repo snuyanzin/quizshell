@@ -59,26 +59,26 @@ public final class GeneralCommands implements Commands {
         Loc.getLocMessage("number-of-tasks-should-be-number"), parts);
     final int numOfTasks = getNumOfTasks(args);
     final int maxNumber = getMaxNumber(args);
-    final BiFunction<Integer, Integer, Integer> biFunction =
+    final BiFunction<Integer, Integer, Integer> result =
         (integer, integer2) -> integer + integer2;
-    final BiFunction<Integer, Integer, String> biFunctionOutput =
+    final BiFunction<Integer, Integer, String> output =
         (integer, integer2) -> integer + " + " + integer2 + " = ";
     Supplier<Integer> numberGenerator =
         () -> Math.abs(random.nextInt() % maxNumber);
-    doTask(numOfTasks, biFunction, biFunctionOutput, numberGenerator);
+    doTask(numOfTasks, result, output, numberGenerator);
   }
 
   private void doTask(int numOfTasks,
-                      BiFunction<Integer, Integer, Integer> biFunction,
-                      BiFunction<Integer, Integer, String> biFunctionOutput,
+                      BiFunction<Integer, Integer, Integer> resultFunction,
+                      BiFunction<Integer, Integer, String> output,
                       Supplier<Integer> numberGenerator) {
     Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8.name());
     for (int i = 0; i < numOfTasks; i++) {
       int first = numberGenerator.get();
       int second = numberGenerator.get();
       int userAnswer = Integer.MIN_VALUE;
-      shell.output(biFunctionOutput.apply(first, second), false);
-      final int result = biFunction.apply(first, second);
+      shell.output(output.apply(first, second), false);
+      final int result = resultFunction.apply(first, second);
       do {
         String answer = scanner.nextLine();
         userAnswer = getUserAnswer(userAnswer, answer);
@@ -101,14 +101,14 @@ public final class GeneralCommands implements Commands {
         Loc.getLocMessage("number-of-tasks-should-be-number"), parts);
     final int numOfTasks = getNumOfTasks(args);
     final int maxNumber = getMaxNumber(args);
-    final BiFunction<Integer, Integer, Integer> biFunction =
+    final BiFunction<Integer, Integer, Integer> result =
         (integer, integer2) -> Math.abs(integer - integer2);
-    final BiFunction<Integer, Integer, String> biFunctionOutput =
+    final BiFunction<Integer, Integer, String> output =
         (integer, integer2) -> Math.max(integer, integer2)
             + " - " + Math.min(integer, integer2) + " = ";
     Supplier<Integer> numberGenerator =
         () -> Math.abs(random.nextInt() % maxNumber);
-    doTask(numOfTasks, biFunction, biFunctionOutput, numberGenerator);
+    doTask(numOfTasks, result, output, numberGenerator);
   }
 
   private int getUserAnswer(int userAnswer, String answer) {
