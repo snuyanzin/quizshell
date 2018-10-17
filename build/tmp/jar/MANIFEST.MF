@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Class-Path: jline-3.9.0.jar
+Main-Class: ru.nuyanzin.quizshell.QuizShell
+
