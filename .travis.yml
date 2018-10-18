@@ -1,10 +1,11 @@
 # Configuration for Travis CI
 language: java
-jdk:
-  - oraclejdk11
-  #- oraclejdk10
-  - oraclejdk9
-  - oraclejdk8
+matrix:
+  include:
+    - jdk: oraclejdk11
+    - jdk: oraclejdk10
+    - jdk: oraclejdk9
+    - jdk: oraclejdk8
 branches:
   only:
     - master
