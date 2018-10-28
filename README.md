@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/snuyanzin/quizshell.svg?branch=master)](https://travis-ci.org/snuyanzin/quizshell)
+[![Build Status: Windows](https://ci.appveyor.com/api/projects/status/github/snuyanzin/quizshell?branch=master&svg=true)](https://ci.appveyor.com/project/snuyanzin/quizshell)
+[![DepShield Badge](https://depshield.sonatype.org/badges/snuyanzin/quizshell/depshield.svg)](https://depshield.github.io)
 # Quiz shell
 Quiz shell for a kid.
 ## Building & Start
