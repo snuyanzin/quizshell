@@ -82,10 +82,15 @@ public final class GeneralCommands implements Commands {
       do {
         String answer = scanner.nextLine();
         userAnswer = getUserAnswer(userAnswer, answer);
-        shell.output(Loc.getLocMessage("answer", answer)
-            + (userAnswer == result
-            ? Loc.getLocMessage("correct-answer")
-            : Loc.getLocMessage("not-correct-answer")));
+        if (userAnswer != result) {
+          shell.output(Loc.getLocMessage("answer", answer)
+              + Loc.getLocMessage("not-correct-answer"));
+          shell.output(output.apply(first, second), false);
+        } else {
+          shell.output(Loc.getLocMessage("answer", answer)
+              + Loc.getLocMessage("correct-answer"));
+        }
+
       } while (userAnswer != result);
     }
   }
@@ -113,7 +118,7 @@ public final class GeneralCommands implements Commands {
 
   private int getUserAnswer(int userAnswer, String answer) {
     int[] intAnswer = parseIntegersOrThrow(
-        Loc.getLocMessage("answer-should-be-number"), answer);
+        Loc.getLocMessage("answer-should-be-number", answer), answer);
     if (intAnswer != null) {
       userAnswer = intAnswer[0];
     }
