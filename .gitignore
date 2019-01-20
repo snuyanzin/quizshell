@@ -1,3 +1,7 @@
+*~
+settings.xml
+.classpath.txt
+.fullclasspath.txt
 .DS_Store
 .gradle
 target
@@ -6,3 +10,12 @@ build
 *.iws
 *.ipr
 .idea/
+
+# eclipse
+.project
+.buildpath
+.classpath
+.settings
+.checkstyle
+
+.mvn/wrapper/maven-wrapper.jar
