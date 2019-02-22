@@ -77,7 +77,8 @@ public final class GeneralCommands implements Commands {
       int first = numberGenerator.get();
       int second = numberGenerator.get();
       int userAnswer = Integer.MIN_VALUE;
-      shell.output(output.apply(first, second), false);
+      final String taskNumber = i + 1 + ") ";
+      shell.output(taskNumber + output.apply(first, second), false);
       final int result = resultFunction.apply(first, second);
       do {
         String answer = scanner.nextLine();
@@ -85,7 +86,7 @@ public final class GeneralCommands implements Commands {
         if (userAnswer != result) {
           shell.output(Loc.getLocMessage("answer", answer)
               + Loc.getLocMessage("not-correct-answer"));
-          shell.output(output.apply(first, second), false);
+          shell.output(taskNumber + output.apply(first, second), false);
         } else {
           shell.output(Loc.getLocMessage("answer", answer)
               + Loc.getLocMessage("correct-answer"));
