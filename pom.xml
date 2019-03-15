@@ -18,7 +18,7 @@
     <top.dir>${project.basedir}</top.dir>
 
     <!-- The following list is sorted. -->
-    <checkstyle.version>8.16</checkstyle.version>
+    <checkstyle.version>8.18</checkstyle.version>
     <forbiddenapis.version>2.6</forbiddenapis.version>
     <jmockit.version>1.45</jmockit.version>
     <junit.version>5.3.2</junit.version>
